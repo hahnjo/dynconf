@@ -20,6 +20,7 @@ type ReplaceEntry struct {
 	Search       string
 	SearchRegexp *regexp.Regexp
 	Replace      string
+	ReplaceBytes []byte
 }
 
 type Config struct {
@@ -34,6 +35,7 @@ func (c *Config) Read(filename string) error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
 	dec := yaml.NewDecoder(file)
 	dec.SetStrict(true)
@@ -43,18 +45,19 @@ func (c *Config) Read(filename string) error {
 		return err
 	}
 
-	for _, d := range c.Delete {
-		d.SearchRegexp, err = regexp.Compile(d.Search)
+	for idx, d := range c.Delete {
+		c.Delete[idx].SearchRegexp, err = regexp.Compile(d.Search)
 		if err != nil {
 			return err
 		}
 	}
 
-	for _, r := range c.Replace {
-		r.SearchRegexp, err = regexp.Compile(r.Search)
+	for idx, r := range c.Replace {
+		c.Replace[idx].SearchRegexp, err = regexp.Compile(r.Search)
 		if err != nil {
 			return err
 		}
+		c.Replace[idx].ReplaceBytes = []byte(r.Replace)
 	}
 
 	return nil

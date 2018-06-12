@@ -16,6 +16,7 @@ Usage:	dynconf command [arguments]
 The commands are:
 
 	check	Validate a configuration file
+	show	Apply a configuration file and output the result
 `
 
 func printUsage() {
@@ -32,6 +33,8 @@ func main() {
 	switch args[0] {
 	case "check":
 		internal.Check(args[1:])
+	case "show":
+		internal.Show(args[1:])
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n\n", args[0])
 		printUsage()

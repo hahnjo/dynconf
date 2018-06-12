@@ -1,2 +1,5 @@
 /dynconf
+
+# For testing in the repository
 /*.yml
+/*.conf
