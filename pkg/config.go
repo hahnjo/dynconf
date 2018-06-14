@@ -45,6 +45,12 @@ func (c *Config) Read(filename string) error {
 		return err
 	}
 
+	return c.Compile()
+}
+
+func (c *Config) Compile() error {
+	var err error
+
 	for idx, d := range c.Delete {
 		c.Delete[idx].SearchRegexp, err = regexp.Compile(d.Search)
 		if err != nil {

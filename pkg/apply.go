@@ -16,6 +16,41 @@ func Apply(c Config) ([]byte, error) {
 	return ApplyToInput(c, input), nil
 }
 
+func isNewLine(c byte) bool {
+	return c == '\r' || c == '\n'
+}
+
+func containsOnlyNewLines(b []byte) bool {
+	for _, c := range b {
+		if !isNewLine(c) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func applyAppend(c Config, modified []byte) []byte {
+	if len(c.Append) == 0 {
+		// Do nothing.
+		return modified
+	}
+
+	if len(modified) > 0 {
+		if !isNewLine(modified[len(modified)-1]) {
+			modified = append(modified, '\n')
+		} else if containsOnlyNewLines(modified) {
+			// There is no content in modified...
+			modified = []byte{}
+		}
+	}
+
+	modified = append(modified, c.Append...)
+	modified = append(modified, '\n')
+
+	return modified
+}
+
 func ApplyToInput(c Config, input []byte) []byte {
 	inLen := len(input)
 
@@ -24,7 +59,7 @@ func ApplyToInput(c Config, input []byte) []byte {
 	idx := 0
 	for idx < inLen {
 		// Find the first character that introduces a newline.
-		to := bytes.IndexAny(input[idx:], "\r\n")
+		to := bytes.IndexAny(input[idx:], "\x00\r\n")
 		if to == -1 {
 			to = inLen
 		} else {
@@ -36,7 +71,7 @@ func ApplyToInput(c Config, input []byte) []byte {
 		// Determine where the next line starts.
 		next := to + 1
 		// Handle Windows line breaks...
-		if input[to] == '\r' && input[next] == '\n' {
+		if next < inLen && isNewLine(input[next]) {
 			next++
 		}
 
@@ -52,17 +87,16 @@ func ApplyToInput(c Config, input []byte) []byte {
 			line = r.SearchRegexp.ReplaceAll(line, r.ReplaceBytes)
 		}
 		modified = append(modified, line...)
-		// Copy original newline characters.
-		modified = append(modified, input[to:next]...)
+		if to < inLen && input[to] != '\x00' {
+			// Copy original newline characters.
+			modified = append(modified, input[to:next]...)
+		}
 
 	next:
 		idx = next
 	}
 
-	if len(c.Append) > 0 {
-		modified = append(modified, c.Append...)
-		modified = append(modified, '\n')
-	}
+	modified = applyAppend(c, modified)
 
 	return modified
 }
