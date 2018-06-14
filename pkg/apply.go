@@ -7,13 +7,13 @@ import (
 	"io/ioutil"
 )
 
-func ApplyToFile(r Recipe, filename string) ([]byte, error) {
+func ApplyToFile(r Recipe, filename string) ([]byte, []byte, error) {
 	input, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return ApplyToInput(r, input), nil
+	return input, ApplyToInput(r, input), nil
 }
 
 func isNewLine(c byte) bool {

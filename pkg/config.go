@@ -3,6 +3,7 @@
 package dynconf
 
 import (
+	"io/ioutil"
 	"os"
 )
 
@@ -17,12 +18,12 @@ func exists(filename string) bool {
 	return err == nil
 }
 
-func getOrig(filename string) string {
-	return filename + ".orig"
+func (c *Config) getOrig() string {
+	return c.base + ".orig"
 }
 
 func (c *Config) findOrig() {
-	orig := getOrig(c.base)
+	orig := c.getOrig()
 	if exists(orig) {
 		c.orig = &orig
 	}
@@ -58,4 +59,43 @@ func (c *Config) GetInput() string {
 
 	// Fall back to using the base file.
 	return c.base
+}
+
+func (c *Config) Commit(orig []byte, modified []byte) error {
+	// Get FileInfo of the configuration file.
+	stat, err := os.Stat(c.base)
+	if err != nil {
+		return err
+	}
+
+	if c.new == nil && c.orig == nil {
+		// Copy the unmodified file to allow idempotence.
+		origFile := c.getOrig()
+		c.orig = &origFile
+		err = ioutil.WriteFile(origFile, orig, stat.Mode())
+		if err != nil {
+			return err
+		}
+	}
+
+	// FIXME: This call is probably not atomic...
+	err = ioutil.WriteFile(stat.Name(), modified, stat.Mode())
+	if err != nil {
+		return err
+	}
+
+	if c.new != nil {
+		// Move the new file to allow idempotence.
+		orig := c.getOrig()
+		c.orig = &orig
+		err = os.Rename(*c.new, orig)
+		if err != nil {
+			return err
+		}
+
+		// The new file doesn't exist anymore.
+		c.new = nil
+	}
+
+	return nil
 }

@@ -9,9 +9,9 @@ import (
 	"github.com/hahnjo/dynconf/pkg"
 )
 
-func Show(args []string) {
+func Apply(args []string) {
 	if len(args) != 1 {
-		fmt.Fprintln(os.Stderr, "Command 'show' requires a recipe")
+		fmt.Fprintln(os.Stderr, "Command 'apply' requires a recipe")
 		os.Exit(1)
 	}
 
@@ -35,13 +35,17 @@ func Show(args []string) {
 	c := dynconf.NewConfig(r.File)
 	input := c.GetInput()
 
-	_, content, err := dynconf.ApplyToFile(r, input)
+	orig, modified, err := dynconf.ApplyToFile(r, input)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Print(string(content))
+	err = c.Commit(orig, modified)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error commiting %s: %s\n", r.File, err)
+		os.Exit(1)
+	}
 
 	os.Exit(0)
 }

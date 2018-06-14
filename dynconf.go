@@ -15,6 +15,7 @@ Usage:	dynconf command [arguments]
 
 The commands are:
 
+	apply	Apply a recipe and commit the result
 	check	Validate a recipe
 	show	Apply a recipe and output the result
 `
@@ -31,6 +32,8 @@ func main() {
 	}
 
 	switch args[0] {
+	case "apply":
+		internal.Apply(args[1:])
 	case "check":
 		internal.Check(args[1:])
 	case "show":
