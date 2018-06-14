@@ -23,9 +23,12 @@ func Show(args []string) {
 		os.Exit(1)
 	}
 
-	err = r.Validate()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Recipe '%s' invalid: %s\n", file, err)
+	errs, _ := r.Validate()
+	if len(errs) > 0 {
+		fmt.Fprintf(os.Stderr, "Recipe '%s' is invalid:\n", file)
+		for _, e := range errs {
+			fmt.Printf("error: %s\n", e)
+		}
 		os.Exit(1)
 	}
 

@@ -23,16 +23,18 @@ func Check(args []string) {
 		os.Exit(1)
 	}
 
-	err = r.Validate()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Recipe '%s' invalid: %s\n", file, err)
+	errs, warns := r.Validate()
+	if len(errs) > 0 {
+		fmt.Fprintf(os.Stderr, "Recipe '%s' is invalid:\n", file)
+		for _, e := range errs {
+			fmt.Printf("error: %s\n", e)
+		}
 		os.Exit(1)
 	}
 
 	fmt.Printf("Recipe '%s' is valid.\n", file)
 
-	warns := r.Warn()
-	if len(warns) != 0 {
+	if len(warns) > 0 {
 		fmt.Println()
 		for _, w := range warns {
 			fmt.Printf("warning: %s\n", w)

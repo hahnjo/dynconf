@@ -69,32 +69,28 @@ func (r *Recipe) Compile() error {
 	return nil
 }
 
-func (r *Recipe) Validate() error {
+func (r *Recipe) Validate() ([]error, []error) {
+	errs := make([]error, 0)
+	warns := make([]error, 0)
+
 	if len(r.File) == 0 {
-		return fmt.Errorf("Cannot have empty filename!")
+		errs = append(errs, fmt.Errorf("Cannot have empty filename!"))
+	}
+	if !path.IsAbs(r.File) {
+		warns = append(warns, fmt.Errorf("File should reference an absolute path!"))
 	}
 
 	for _, d := range r.Delete {
 		if len(d.Search) == 0 {
-			return fmt.Errorf("Delete entry cannot have empty regex!")
+			errs = append(errs, fmt.Errorf("Delete entry cannot have empty regex!"))
 		}
 	}
 
 	for _, rs := range r.Replace {
 		if len(rs.Search) == 0 {
-			return fmt.Errorf("Replace entry cannot have empty regex!")
+			errs = append(errs, fmt.Errorf("Replace entry cannot have empty regex!"))
 		}
 	}
 
-	return nil
-}
-
-func (r *Recipe) Warn() []error {
-	w := make([]error, 0)
-
-	if !path.IsAbs(r.File) {
-		w = append(w, fmt.Errorf("File should reference an absolute path!"))
-	}
-
-	return w
+	return errs, warns
 }
