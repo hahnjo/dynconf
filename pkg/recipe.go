@@ -23,14 +23,14 @@ type ReplaceEntry struct {
 	ReplaceBytes []byte
 }
 
-type Config struct {
+type Recipe struct {
 	File    string
 	Delete  []DeleteEntry
 	Replace []ReplaceEntry
 	Append  string
 }
 
-func (c *Config) Read(filename string) error {
+func (r *Recipe) Read(filename string) error {
 	file, err := os.Open(filename)
 	if err != nil {
 		return err
@@ -40,48 +40,48 @@ func (c *Config) Read(filename string) error {
 	dec := yaml.NewDecoder(file)
 	dec.SetStrict(true)
 
-	err = dec.Decode(c)
+	err = dec.Decode(r)
 	if err != nil {
 		return err
 	}
 
-	return c.Compile()
+	return r.Compile()
 }
 
-func (c *Config) Compile() error {
+func (r *Recipe) Compile() error {
 	var err error
 
-	for idx, d := range c.Delete {
-		c.Delete[idx].SearchRegexp, err = regexp.Compile(d.Search)
+	for idx, d := range r.Delete {
+		r.Delete[idx].SearchRegexp, err = regexp.Compile(d.Search)
 		if err != nil {
 			return err
 		}
 	}
 
-	for idx, r := range c.Replace {
-		c.Replace[idx].SearchRegexp, err = regexp.Compile(r.Search)
+	for idx, sr := range r.Replace {
+		r.Replace[idx].SearchRegexp, err = regexp.Compile(sr.Search)
 		if err != nil {
 			return err
 		}
-		c.Replace[idx].ReplaceBytes = []byte(r.Replace)
+		r.Replace[idx].ReplaceBytes = []byte(sr.Replace)
 	}
 
 	return nil
 }
 
-func (c *Config) Validate() error {
-	if len(c.File) == 0 {
+func (r *Recipe) Validate() error {
+	if len(r.File) == 0 {
 		return fmt.Errorf("Cannot have empty filename!")
 	}
 
-	for _, d := range c.Delete {
+	for _, d := range r.Delete {
 		if len(d.Search) == 0 {
 			return fmt.Errorf("Delete entry cannot have empty regex!")
 		}
 	}
 
-	for _, r := range c.Replace {
-		if len(r.Search) == 0 {
+	for _, rs := range r.Replace {
+		if len(rs.Search) == 0 {
 			return fmt.Errorf("Replace entry cannot have empty regex!")
 		}
 	}
@@ -89,10 +89,10 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func (c *Config) Warn() []error {
+func (r *Recipe) Warn() []error {
 	w := make([]error, 0)
 
-	if !path.IsAbs(c.File) {
+	if !path.IsAbs(r.File) {
 		w = append(w, fmt.Errorf("File should reference an absolute path!"))
 	}
 

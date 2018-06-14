@@ -7,13 +7,13 @@ import (
 	"io/ioutil"
 )
 
-func Apply(c Config) ([]byte, error) {
-	input, err := ioutil.ReadFile(c.File)
+func Apply(r Recipe) ([]byte, error) {
+	input, err := ioutil.ReadFile(r.File)
 	if err != nil {
 		return nil, err
 	}
 
-	return ApplyToInput(c, input), nil
+	return ApplyToInput(r, input), nil
 }
 
 func isNewLine(c byte) bool {
@@ -30,8 +30,8 @@ func containsOnlyNewLines(b []byte) bool {
 	return true
 }
 
-func applyAppend(c Config, modified []byte) []byte {
-	if len(c.Append) == 0 {
+func applyAppend(r Recipe, modified []byte) []byte {
+	if len(r.Append) == 0 {
 		// Do nothing.
 		return modified
 	}
@@ -45,13 +45,13 @@ func applyAppend(c Config, modified []byte) []byte {
 		}
 	}
 
-	modified = append(modified, c.Append...)
+	modified = append(modified, r.Append...)
 	modified = append(modified, '\n')
 
 	return modified
 }
 
-func ApplyToInput(c Config, input []byte) []byte {
+func ApplyToInput(r Recipe, input []byte) []byte {
 	inLen := len(input)
 
 	modified := make([]byte, 0)
@@ -76,15 +76,15 @@ func ApplyToInput(c Config, input []byte) []byte {
 		}
 
 		// Skip line if it matches a pattern that shall be deleted.
-		for _, d := range c.Delete {
+		for _, d := range r.Delete {
 			if d.SearchRegexp.Match(line) {
 				goto next
 			}
 		}
 
 		// Check if line matches a pattern that shall be replaced.
-		for _, r := range c.Replace {
-			line = r.SearchRegexp.ReplaceAll(line, r.ReplaceBytes)
+		for _, sr := range r.Replace {
+			line = sr.SearchRegexp.ReplaceAll(line, sr.ReplaceBytes)
 		}
 		modified = append(modified, line...)
 		if to < inLen && input[to] != '\x00' {
@@ -96,7 +96,7 @@ func ApplyToInput(c Config, input []byte) []byte {
 		idx = next
 	}
 
-	modified = applyAppend(c, modified)
+	modified = applyAppend(r, modified)
 
 	return modified
 }

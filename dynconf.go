@@ -15,8 +15,8 @@ Usage:	dynconf command [arguments]
 
 The commands are:
 
-	check	Validate a configuration file
-	show	Apply a configuration file and output the result
+	check	Validate a recipe
+	show	Apply a recipe and output the result
 `
 
 func printUsage() {
