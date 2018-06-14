@@ -32,7 +32,10 @@ func Show(args []string) {
 		os.Exit(1)
 	}
 
-	content, err := dynconf.Apply(r)
+	c := dynconf.NewConfig(r.File)
+	input := c.GetInput()
+
+	content, err := dynconf.ApplyToFile(r, input)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 		os.Exit(1)

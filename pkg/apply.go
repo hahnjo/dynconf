@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 )
 
-func Apply(r Recipe) ([]byte, error) {
-	input, err := ioutil.ReadFile(r.File)
+func ApplyToFile(r Recipe, filename string) ([]byte, error) {
+	input, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
