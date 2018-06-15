@@ -1,3 +1,43 @@
+DynConf
+=======
+
+DynConf is a small program to apply recipes to configuration files.
+This can be used to dynamically alter a configuration without diverging from the defaults:
+When there is an update you simply re-run DynConf to produce a new configuration file.
+In this case the recipes describe which lines should be deleted, replaced, or appended.
+
+The executable expects one of the following subcommands:
+ * `apply` takes a recipe, produces a configuration file and writes the result.
+   (You might need to run this subcommand as `root` to modify files in `/etc/`.)
+ * `check` validates the given recipe.
+ * `show` produces a configuration file, but outputs the result for inspection.
+
+Recipes are written in YAML and look like this:
+```yaml
+file: "/etc/test.conf"
+
+delete:
+  -
+    search: "remove"
+
+replace:
+  -
+    search: "pattern"
+    replace: "substitution"
+
+append: "last line"
+```
+`file` names the configuration file that should be produced.
+The unmodified input is taken from (in this order):
+1. An updated configuration file installed by the distribution's package manager.
+   For example, on Arch Linux these are called `.pacnew`, `rpm` calls them `.rmpnew`.
+2. A saved copy of the unmodified configuration file, suffixed with `.orig`.
+3. If all else fails DynConf will modify the configuration file itself.
+
+To ensure idempotence DynConf will create an unmodified copy and suffix it with `.orig`.
+As seen in the previous paragraph, updates have higher priority and an invocation of `apply` will work with the new configuration file.
+In addition, DynConf will update the `.orig` file and remove the new file installed by the package manager.
+
 License
 -------
 
