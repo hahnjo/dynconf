@@ -8,7 +8,7 @@ fmt:
 
 TEST_DIRS = ./pkg
 test:
-	go test $(TEST_DIRS)
+	go test -cover $(TEST_DIRS)
 .PHONY: test
 
 bench:

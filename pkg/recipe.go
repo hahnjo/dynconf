@@ -75,8 +75,7 @@ func (r *Recipe) Validate() ([]error, []error) {
 
 	if len(r.File) == 0 {
 		errs = append(errs, fmt.Errorf("Cannot have empty filename!"))
-	}
-	if !path.IsAbs(r.File) {
+	} else if !path.IsAbs(r.File) {
 		warns = append(warns, fmt.Errorf("File should reference an absolute path!"))
 	}
 

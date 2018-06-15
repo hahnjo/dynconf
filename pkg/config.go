@@ -29,12 +29,12 @@ func (c *Config) findOrig() {
 	}
 }
 
-var NewSuffixes = []string{
+var newSuffixes = []string{
 	".pacnew", // pacman (Arch Linux)
 }
 
 func (c *Config) findNew() {
-	for _, suffix := range NewSuffixes {
+	for _, suffix := range newSuffixes {
 		newFilename := c.base + suffix
 		if exists(newFilename) {
 			c.new = &newFilename
@@ -61,7 +61,7 @@ func (c *Config) GetInput() string {
 	return c.base
 }
 
-func (c *Config) Commit(orig []byte, modified []byte) error {
+func (c *Config) Commit(origData []byte, modified []byte) error {
 	// Get FileInfo of the configuration file.
 	stat, err := os.Stat(c.base)
 	if err != nil {
@@ -72,14 +72,14 @@ func (c *Config) Commit(orig []byte, modified []byte) error {
 		// Copy the unmodified file to allow idempotence.
 		origFile := c.getOrig()
 		c.orig = &origFile
-		err = ioutil.WriteFile(origFile, orig, stat.Mode())
+		err = ioutil.WriteFile(origFile, origData, stat.Mode())
 		if err != nil {
 			return err
 		}
 	}
 
 	// FIXME: This call is probably not atomic...
-	err = ioutil.WriteFile(stat.Name(), modified, stat.Mode())
+	err = ioutil.WriteFile(c.base, modified, stat.Mode())
 	if err != nil {
 		return err
 	}
