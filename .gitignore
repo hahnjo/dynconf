@@ -9,3 +9,6 @@
 /*.conf
 /*.conf.orig
 /*.conf.pacnew
+
+# Track configuration for Travis
+!/.travis.yml
