@@ -2,7 +2,11 @@ language: go
 go:
   - "1.10"
 
-before_install: go get -u github.com/golang/dep/cmd/dep
+before_install:
+  - go get -u github.com/golang/dep/cmd/dep
+  - go get -u github.com/mattn/goveralls
 install: make
 
-script: make test
+script:
+  - COVERAGE="-covermode=count -coverprofile=coverage.out" make test
+  - goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN

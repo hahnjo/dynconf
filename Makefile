@@ -14,8 +14,9 @@ fmt:
 .PHONY: fmt
 
 TEST_DIRS = ./pkg
+COVERAGE ?= -cover
 test:
-	go test -cover $(TEST_DIRS)
+	go test $(COVERAGE) $(TEST_DIRS)
 .PHONY: test
 
 bench:
