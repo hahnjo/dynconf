@@ -1,4 +1,4 @@
-DynConf
+DynConf [![Travis CI](https://travis-ci.org/hahnjo/dynconf.svg?branch=master)](https://travis-ci.org/hahnjo/dynconf.svg?branch=master)
 =======
 
 DynConf is a small program to apply recipes to configuration files.
