@@ -1,7 +1,14 @@
 /dynconf
 
+# Dependency management with dep
+/Gopkg.lock
+/vendor/
+
 # For testing in the repository
 /*.yml
 /*.conf
 /*.conf.orig
 /*.conf.pacnew
+
+# Track configuration for Travis
+!/.travis.yml

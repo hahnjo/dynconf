@@ -1,3 +1,10 @@
+all: dep dynconf
+.PHONY: all
+
+dep:
+	dep ensure
+.PHONY: dep
+
 dynconf:
 	go build
 .PHONY: dynconf
