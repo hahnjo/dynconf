@@ -3,8 +3,10 @@
 package dynconf
 
 import (
-	"io/ioutil"
+	"bytes"
 	"os"
+
+	"github.com/natefinch/atomic"
 )
 
 type Config struct {
@@ -63,24 +65,17 @@ func (c *Config) GetInput() string {
 }
 
 func (c *Config) Commit(origData []byte, modified []byte) error {
-	// Get FileInfo of the configuration file.
-	stat, err := os.Stat(c.base)
-	if err != nil {
-		return err
-	}
-
 	if c.new == nil && c.orig == nil {
 		// Copy the unmodified file to allow idempotence.
 		origFile := c.getOrig()
 		c.orig = &origFile
-		err = ioutil.WriteFile(origFile, origData, stat.Mode())
+		err := atomic.WriteFile(origFile, bytes.NewReader(origData))
 		if err != nil {
 			return err
 		}
 	}
 
-	// FIXME: This call is probably not atomic...
-	err = ioutil.WriteFile(c.base, modified, stat.Mode())
+	err := atomic.WriteFile(c.base, bytes.NewReader(modified))
 	if err != nil {
 		return err
 	}

@@ -1,7 +1,6 @@
 /dynconf
 
 # Dependency management with dep
-/Gopkg.lock
 /vendor/
 
 # For testing in the repository
