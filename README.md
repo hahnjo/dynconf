@@ -1,4 +1,4 @@
-DynConf [![Travis CI](https://travis-ci.org/hahnjo/dynconf.svg?branch=master)](https://travis-ci.org/hahnjo/dynconf.svg?branch=master)[![Coverage Status](https://coveralls.io/repos/github/hahnjo/dynconf/badge.svg?branch=coveralls)](https://coveralls.io/github/hahnjo/dynconf?branch=coveralls)
+DynConf [![Travis CI](https://travis-ci.org/hahnjo/dynconf.svg?branch=master)](https://travis-ci.org/hahnjo/dynconf) [![Coverage Status](https://coveralls.io/repos/github/hahnjo/dynconf/badge.svg?branch=master)](https://coveralls.io/github/hahnjo/dynconf?branch=master)
 =======
 
 DynConf is a small program to apply recipes to configuration files.
