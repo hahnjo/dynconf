@@ -31,6 +31,7 @@ func (c *Config) findOrig() {
 
 var newSuffixes = []string{
 	".pacnew", // pacman (Arch Linux)
+	".rpmnew", // rpm (RHEL, Fedora)
 }
 
 func (c *Config) findNew() {

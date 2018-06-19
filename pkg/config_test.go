@@ -100,11 +100,11 @@ func TestOrig(t *testing.T) {
 	checkContent(t, orig, oldOrigData)
 }
 
-func TestPacnew(t *testing.T) {
-	dir, filenames := createTempFiles(t, "pacnew", []string{
+func testNew(t *testing.T, newSuffix string) {
+	dir, filenames := createTempFiles(t, newSuffix, []string{
 		"test.conf",
 		"test.conf.orig",
-		"test.conf.pacnew",
+		"test.conf." + newSuffix,
 	})
 	defer os.RemoveAll(dir)
 	base := filenames[0]
@@ -116,21 +116,44 @@ func TestPacnew(t *testing.T) {
 	c := NewConfig(base)
 	i := c.GetInput()
 	if i != pacnew {
-		t.Errorf("getInput should return .pacnew: %s\n", i)
+		t.Errorf("getInput should return .%s: %s\n", newSuffix, i)
 	}
 
 	commit(t, c)
 	checkContent(t, base, modifiedData)
 	checkContent(t, orig, newData)
 	if exists(pacnew) {
-		t.Error(".pacnew should have been deleted\n")
+		t.Errorf(".%s should have been deleted\n", newSuffix)
 	}
 }
 
-func TestGetPacnew_NoOrig(t *testing.T) {
-	dir, filenames := createTempFiles(t, "pacnew_noOrig", []string{
+func TestPacnew(t *testing.T) {
+	testNew(t, "pacnew")
+}
+
+func TestRpmnew(t *testing.T) {
+	testNew(t, "rpmnew")
+}
+
+func TestNew_Unrecognized(t *testing.T) {
+	dir, filenames := createTempFiles(t, "new_unrecognized", []string{
 		"test.conf",
-		"test.conf.pacnew",
+		"test.conf.new",
+	})
+	defer os.RemoveAll(dir)
+	base := filenames[0]
+
+	c := NewConfig(base)
+	i := c.GetInput()
+	if i != base {
+		t.Errorf("getInput should return base: %s\n", i)
+	}
+}
+
+func testNew_NoOrig(t *testing.T, newSuffix string) {
+	dir, filenames := createTempFiles(t, newSuffix + "_noOrig", []string{
+		"test.conf",
+		"test.conf." + newSuffix,
 	})
 	defer os.RemoveAll(dir)
 	base := filenames[0]
@@ -140,7 +163,7 @@ func TestGetPacnew_NoOrig(t *testing.T) {
 	c := NewConfig(base)
 	i := c.GetInput()
 	if i != pacnew {
-		t.Errorf("getInput should return .pacnew: %s\n", i)
+		t.Errorf("getInput should return .%s: %s\n", newSuffix, i)
 	}
 
 	commit(t, c)
@@ -148,6 +171,14 @@ func TestGetPacnew_NoOrig(t *testing.T) {
 	orig := path.Join(dir, "test.conf.orig")
 	checkContent(t, orig, newData)
 	if exists(pacnew) {
-		t.Error(".pacnew should have been deleted\n")
+		t.Errorf(".%s should have been deleted\n", newSuffix)
 	}
+}
+
+func testPacnew_NoOrig(t *testing.T) {
+	testNew_NoOrig(t, "pacnew")
+}
+
+func testRpmnew_NoOrig(t *testing.T) {
+	testNew_NoOrig(t, "rpmnew")
 }
