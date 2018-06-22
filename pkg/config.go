@@ -3,21 +3,13 @@
 package dynconf
 
 import (
-	"bytes"
 	"os"
-
-	"github.com/natefinch/atomic"
 )
 
 type Config struct {
 	base string
 	orig *string
 	new  *string
-}
-
-func exists(filename string) bool {
-	_, err := os.Stat(filename)
-	return err == nil
 }
 
 func (c *Config) getOrig() string {
@@ -65,17 +57,23 @@ func (c *Config) GetInput() string {
 }
 
 func (c *Config) Commit(origData []byte, modified []byte) error {
+	// Get FileInfo of the configuration file.
+	stat, err := os.Stat(c.base)
+	if err != nil {
+		return err
+	}
+
 	if c.new == nil && c.orig == nil {
 		// Copy the unmodified file to allow idempotence.
 		origFile := c.getOrig()
 		c.orig = &origFile
-		err := atomic.WriteFile(origFile, bytes.NewReader(origData))
+		err = writeFile(origFile, origData, stat)
 		if err != nil {
 			return err
 		}
 	}
 
-	err := atomic.WriteFile(c.base, bytes.NewReader(modified))
+	err = writeFile(c.base, modified, stat)
 	if err != nil {
 		return err
 	}
