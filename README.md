@@ -27,6 +27,8 @@ replace:
 
 append: "last line"
 ```
+`delete` and `replace` are arrays and their `search` key is interpreted as regular expression.
+
 `file` names the configuration file that should be produced.
 The unmodified input is taken from (in this order):
 1. An updated configuration file installed by the distribution's package manager.
