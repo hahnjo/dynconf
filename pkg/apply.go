@@ -70,8 +70,8 @@ func ApplyToInput(r Recipe, input []byte) []byte {
 
 		// Determine where the next line starts.
 		next := to + 1
-		// Handle Windows line breaks...
-		if next < inLen && isNewLine(input[next]) {
+		// Handle Windows line breaks. Make sure that the two line breaks are different or empty lines might be skipped.
+		if next < inLen && input[to] != input[next] && isNewLine(input[next]) {
 			next++
 		}
 

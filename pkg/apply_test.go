@@ -18,8 +18,8 @@ func TestApply_Delete(t *testing.T) {
 	}
 	r.Compile()
 
-	s := apply(r, "line1\nremove\nline2\ntest remove test\n")
-	if s != "line1\nline2\n" {
+	s := apply(r, "line1\nremove\n\nline2\ntest remove test\n")
+	if s != "line1\n\nline2\n" {
 		t.Errorf("'remove' lines should have been removed: %s", s)
 	}
 }
