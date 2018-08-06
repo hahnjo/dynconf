@@ -1,7 +1,12 @@
+v1.0.2 [2018-08-06]
+------------------
+
+ * Do not append newline if 'append' already has one.
+
 v1.0.1 [2018-07-01]
 -------------------
 
- * Make sure delete doesn't remove empty lines after the pattern
+ * Make sure delete doesn't remove empty lines after the pattern.
 
 v1.0 [2018-06-24]
 -----------------
