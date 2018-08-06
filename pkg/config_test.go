@@ -151,7 +151,7 @@ func TestNew_Unrecognized(t *testing.T) {
 }
 
 func testNew_NoOrig(t *testing.T, newSuffix string) {
-	dir, filenames := createTempFiles(t, newSuffix + "_noOrig", []string{
+	dir, filenames := createTempFiles(t, newSuffix+"_noOrig", []string{
 		"test.conf",
 		"test.conf." + newSuffix,
 	})

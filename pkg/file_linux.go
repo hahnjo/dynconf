@@ -7,8 +7,8 @@ package dynconf
 import (
 	"fmt"
 	"os"
-	"syscall"
 	"path"
+	"syscall"
 )
 
 // Write data and synchronize file.
@@ -60,7 +60,7 @@ func writeFile(filename string, data []byte, stat os.FileInfo) error {
 	}
 
 	// Create temporary file to write data and atomically move to destination.
-	tmpFilename := path.Join(dir, ".dynconf." + file)
+	tmpFilename := path.Join(dir, ".dynconf."+file)
 	f, err := os.Create(tmpFilename)
 	if err != nil {
 		return err
