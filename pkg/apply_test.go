@@ -48,7 +48,7 @@ func TestApply_Append(t *testing.T) {
 		t.Errorf("line should have been appended: %s", s)
 	}
 
-	// Apply should add a newline after the input.
+	// Apply should add a newline after the input (if there is none).
 	s = apply(r, "line")
 	if s != "line\nappend\n" {
 		t.Errorf("line should have been appended after newline: %s", s)
@@ -63,6 +63,18 @@ func TestApply_Append(t *testing.T) {
 	s = apply(r, "\n")
 	if s != "append\n" {
 		t.Errorf("line should have been appended: %s", s)
+	}
+}
+
+func TestApply_AppendNewLine(t *testing.T) {
+	r := Recipe{
+		Append: "line1\nline2\n",
+	}
+
+	// There should be no additiona newline after the append.
+	s := apply(r, "original\n")
+	if s != "original\nline1\nline2\n" {
+		t.Errorf("lines should have been appended: %s", s)
 	}
 }
 

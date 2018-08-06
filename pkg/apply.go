@@ -46,7 +46,9 @@ func applyAppend(r Recipe, modified []byte) []byte {
 	}
 
 	modified = append(modified, r.Append...)
-	modified = append(modified, '\n')
+	if !isNewLine(r.Append[len(r.Append)-1]) {
+		modified = append(modified, '\n')
+	}
 
 	return modified
 }
