@@ -54,7 +54,7 @@ License
 
 The code is released under the GNU General Public License v3:
 
-    Copyright (C) 2018  Jonas Hahnfeld
+    Copyright (C) 2018 - 2019  Jonas Hahnfeld
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
