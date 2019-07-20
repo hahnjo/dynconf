@@ -11,12 +11,21 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type Context struct {
+	Begin       string
+	BeginRegexp *regexp.Regexp
+	End         string
+	EndRegexp   *regexp.Regexp
+}
+
 type DeleteEntry struct {
+	Context      Context
 	Search       string
 	SearchRegexp *regexp.Regexp
 }
 
 type ReplaceEntry struct {
+	Context      Context
 	Search       string
 	SearchRegexp *regexp.Regexp
 	Replace      string
@@ -56,6 +65,19 @@ func (r *Recipe) Compile() error {
 		if err != nil {
 			return err
 		}
+
+		if d.Context.Begin != "" {
+			r.Delete[idx].Context.BeginRegexp, err = regexp.Compile(d.Context.Begin)
+			if err != nil {
+				return err
+			}
+		}
+		if d.Context.End != "" {
+			r.Delete[idx].Context.EndRegexp, err = regexp.Compile(d.Context.End)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	for idx, sr := range r.Replace {
@@ -64,6 +86,19 @@ func (r *Recipe) Compile() error {
 			return err
 		}
 		r.Replace[idx].ReplaceBytes = []byte(sr.Replace)
+
+		if sr.Context.Begin != "" {
+			r.Replace[idx].Context.BeginRegexp, err = regexp.Compile(sr.Context.Begin)
+			if err != nil {
+				return err
+			}
+		}
+		if sr.Context.End != "" {
+			r.Replace[idx].Context.EndRegexp, err = regexp.Compile(sr.Context.End)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil

@@ -18,16 +18,25 @@ file: "/etc/test.conf"
 
 delete:
   -
+    context:
+      begin: "begin"
+      end: "end"
     search: "remove"
 
 replace:
   -
+    context:
+      begin: "begin"
+      end: "end"
     search: "pattern"
     replace: "substitution"
 
 append: "last line"
 ```
 `delete` and `replace` are arrays and their `search` key is interpreted as regular expression.
+`context` is optional and allows to restrict `delete` and `replace` to a subset of the file.
+`begin` and `end` are interpreted as regular expressions and matched to input file before deleting a line or replacing its contents.
+If `begin` or `end` is omitted, the context begins in the first line or ends at the last.
 
 `file` names the configuration file that should be produced.
 The unmodified input is taken from (in this order):

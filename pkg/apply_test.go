@@ -24,6 +24,75 @@ func TestApply_Delete(t *testing.T) {
 	}
 }
 
+func TestApply_DeleteContext(t *testing.T) {
+	r := Recipe{
+		Delete: []DeleteEntry{
+			{Context: Context{Begin: "\\[begin\\]", End: "\\[end\\]"}, Search: "removeContext"},
+			{Context: Context{Begin: "\\[begin\\]"}, Search: "removeBegin"},
+			{Context: Context{End: "\\[end\\]"}, Search: "removeEnd"},
+			{Context: Context{End: "notThere"}, Search: "removeAlways"},
+			{Context: Context{Begin: "notThere"}, Search: "removeNever"},
+		},
+	}
+	r.Compile()
+
+	s := apply(r, `
+removeContext
+removeBegin
+removeEnd
+removeAlways
+removeNever
+
+--[begin]--
+removeContext
+removeBegin
+removeEnd
+removeAlways
+removeNever
+--[end]--
+
+removeContext
+removeBegin
+removeEnd
+removeAlways
+removeNever`)
+
+	if s != `
+removeContext
+removeBegin
+removeNever
+
+--[begin]--
+removeNever
+--[end]--
+
+removeContext
+removeEnd
+removeNever` {
+		t.Errorf("some lines should have been removed: %s", s)
+	}
+}
+
+func TestApply_DeleteContextSpecial(t *testing.T) {
+	r := Recipe{
+		Delete: []DeleteEntry{
+			{Context: Context{Begin: "begin", End: "end"}, Search: "remove"},
+		},
+	}
+	r.Compile()
+
+	sameLine := "remove\nbegin end\nremove\n"
+	s := apply(r, sameLine)
+	if s != sameLine {
+		t.Errorf("input should not have been modified: %s", s)
+	}
+
+	s = apply(r, "remove\nbegin\nremove\nend\nremove\nbegin\nremove\nend\nremove\n")
+	if s != "remove\nbegin\nend\nremove\nbegin\nend\nremove\n" {
+		t.Errorf("some lines should have been removed: %s", s)
+	}
+}
+
 func TestApply_Replace(t *testing.T) {
 	r := Recipe{
 		Replace: []ReplaceEntry{
@@ -35,6 +104,82 @@ func TestApply_Replace(t *testing.T) {
 	s := apply(r, "line1\nsearch\nline2\ntest search replace\n")
 	if s != "line1\nreplace\nline2\ntest replace replace\n" {
 		t.Errorf("'search' lines should have been replaced: %s", s)
+	}
+}
+func TestApply_ReplaceContext(t *testing.T) {
+	r := Recipe{
+		Replace: []ReplaceEntry{
+			{Context: Context{Begin: "\\[begin\\]", End: "\\[end\\]"}, Search: "searchContext", Replace: "replaceContext"},
+			{Context: Context{Begin: "\\[begin\\]"}, Search: "searchBegin", Replace: "replaceBegin"},
+			{Context: Context{End: "\\[end\\]"}, Search: "searchEnd", Replace: "replaceEnd"},
+			{Context: Context{End: "notThere"}, Search: "searchAlways", Replace: "replaceAlways"},
+			{Context: Context{Begin: "notThere"}, Search: "searchNever", Replace: "replaceNever"},
+		},
+	}
+	r.Compile()
+
+	s := apply(r, `
+searchContext
+searchBegin
+searchEnd
+searchAlways
+searchNever
+
+--[begin]--
+searchContext
+searchBegin
+searchEnd
+searchAlways
+searchNever
+--[end]--
+
+searchContext
+searchBegin
+searchEnd
+searchAlways
+searchNever`)
+
+	if s != `
+searchContext
+searchBegin
+replaceEnd
+replaceAlways
+searchNever
+
+--[begin]--
+replaceContext
+replaceBegin
+replaceEnd
+replaceAlways
+searchNever
+--[end]--
+
+searchContext
+replaceBegin
+searchEnd
+replaceAlways
+searchNever` {
+		t.Errorf("some lines should have been replaced: %s", s)
+	}
+}
+
+func TestApply_ReplaceContextSpecial(t *testing.T) {
+	r := Recipe{
+		Replace: []ReplaceEntry{
+			{Context: Context{Begin: "begin", End: "end"}, Search: "search", Replace: "replace"},
+		},
+	}
+	r.Compile()
+
+	sameLine := "search\nbegin end\nsearch\n"
+	s := apply(r, sameLine)
+	if s != sameLine {
+		t.Errorf("input should not have been modified: %s", s)
+	}
+
+	s = apply(r, "search\nbegin\nsearch\nend\nsearch\nbegin\nsearch\nend\nsearch\n")
+	if s != "search\nbegin\nreplace\nend\nsearch\nbegin\nreplace\nend\nsearch\n" {
+		t.Errorf("some lines should have been replaced: %s", s)
 	}
 }
 
