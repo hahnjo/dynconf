@@ -56,14 +56,18 @@ func applyAppend(r Recipe, modified []byte) []byte {
 func ApplyToInput(r Recipe, input []byte) []byte {
 	inLen := len(input)
 
-	// A rule is active iff there is no begin pattern for a context.
-	deleteActive := make([]bool, len(r.Delete))
-	replaceActive := make([]bool, len(r.Replace))
-	for idx, d := range r.Delete {
-		deleteActive[idx] = (d.Context.BeginRegexp == nil)
-	}
-	for idx, r := range r.Replace {
-		replaceActive[idx] = (r.Context.BeginRegexp == nil)
+	deleteActive := []bool(nil)
+	replaceActive := []bool(nil)
+	if r.hasContext {
+		// A rule is active iff there is no begin pattern for a context.
+		deleteActive = make([]bool, len(r.Delete))
+		replaceActive = make([]bool, len(r.Replace))
+		for idx, d := range r.Delete {
+			deleteActive[idx] = (d.Context.BeginRegexp == nil)
+		}
+		for idx, r := range r.Replace {
+			replaceActive[idx] = (r.Context.BeginRegexp == nil)
+		}
 	}
 
 	modified := make([]byte, 0)
@@ -87,36 +91,38 @@ func ApplyToInput(r Recipe, input []byte) []byte {
 			next++
 		}
 
-		// For each delete and replace, check if the context begins or ends.
-		for idx, d := range r.Delete {
-			c := d.Context
-			if !deleteActive[idx] && c.BeginRegexp != nil && c.BeginRegexp.Match(line) {
-				deleteActive[idx] = true
+		if r.hasContext {
+			// For each delete and replace, check if the context begins or ends.
+			for idx, d := range r.Delete {
+				c := d.Context
+				if !deleteActive[idx] && c.BeginRegexp != nil && c.BeginRegexp.Match(line) {
+					deleteActive[idx] = true
+				}
+				if deleteActive[idx] && c.EndRegexp != nil && c.EndRegexp.Match(line) {
+					deleteActive[idx] = false
+				}
 			}
-			if deleteActive[idx] && c.EndRegexp != nil && c.EndRegexp.Match(line) {
-				deleteActive[idx] = false
-			}
-		}
-		for idx, sr := range r.Replace {
-			c := sr.Context
-			if !replaceActive[idx] && c.BeginRegexp != nil && c.BeginRegexp.Match(line) {
-				replaceActive[idx] = true
-			}
-			if replaceActive[idx] && c.EndRegexp != nil && c.EndRegexp.Match(line) {
-				replaceActive[idx] = false
+			for idx, sr := range r.Replace {
+				c := sr.Context
+				if !replaceActive[idx] && c.BeginRegexp != nil && c.BeginRegexp.Match(line) {
+					replaceActive[idx] = true
+				}
+				if replaceActive[idx] && c.EndRegexp != nil && c.EndRegexp.Match(line) {
+					replaceActive[idx] = false
+				}
 			}
 		}
 
 		// Skip line if it matches a pattern that shall be deleted.
 		for idx, d := range r.Delete {
-			if deleteActive[idx] && d.SearchRegexp.Match(line) {
+			if (!r.hasContext || deleteActive[idx]) && d.SearchRegexp.Match(line) {
 				goto next
 			}
 		}
 
 		// Check if line matches a pattern that shall be replaced.
 		for idx, sr := range r.Replace {
-			if replaceActive[idx] {
+			if !r.hasContext || replaceActive[idx] {
 				line = sr.SearchRegexp.ReplaceAll(line, sr.ReplaceBytes)
 			}
 		}

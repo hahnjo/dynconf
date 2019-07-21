@@ -37,6 +37,8 @@ type Recipe struct {
 	Delete  []DeleteEntry
 	Replace []ReplaceEntry
 	Append  string
+
+	hasContext bool
 }
 
 func (r *Recipe) Read(filename string) error {
@@ -67,12 +69,14 @@ func (r *Recipe) Compile() error {
 		}
 
 		if d.Context.Begin != "" {
+			r.hasContext = true
 			r.Delete[idx].Context.BeginRegexp, err = regexp.Compile(d.Context.Begin)
 			if err != nil {
 				return err
 			}
 		}
 		if d.Context.End != "" {
+			r.hasContext = true
 			r.Delete[idx].Context.EndRegexp, err = regexp.Compile(d.Context.End)
 			if err != nil {
 				return err
@@ -88,12 +92,14 @@ func (r *Recipe) Compile() error {
 		r.Replace[idx].ReplaceBytes = []byte(sr.Replace)
 
 		if sr.Context.Begin != "" {
+			r.hasContext = true
 			r.Replace[idx].Context.BeginRegexp, err = regexp.Compile(sr.Context.Begin)
 			if err != nil {
 				return err
 			}
 		}
 		if sr.Context.End != "" {
+			r.hasContext = true
 			r.Replace[idx].Context.EndRegexp, err = regexp.Compile(sr.Context.End)
 			if err != nil {
 				return err
