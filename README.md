@@ -22,6 +22,7 @@ delete:
       begin: "begin"
       end: "end"
     search: "remove"
+    checkCount: 1
 
 replace:
   -
@@ -30,6 +31,7 @@ replace:
       end: "end"
     search: "pattern"
     replace: "substitution"
+    checkCount: 1
 
 append: "last line"
 ```
@@ -40,6 +42,9 @@ append: "last line"
 If `begin` or `end` is omitted, the context begins in the first line or ends at the last.
 `begin` and `end` do not match the same substring, ie. `end` can only match from the position where the match of `begin` ended.
 However, if `begin` and `end` still match at the same line the context will not be enabled.
+
+`checkCount` is also optional and denotes how often a delete or replace is expected to be applied.
+If the expectation does not hold, DynConf will print an error and not apply the recipe.
 
 `file` names the configuration file that should be produced.
 The unmodified input is taken from (in this order):
