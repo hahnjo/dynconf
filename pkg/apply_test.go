@@ -106,6 +106,21 @@ func TestApply_Replace(t *testing.T) {
 		t.Errorf("'search' lines should have been replaced: %s", s)
 	}
 }
+
+func TestApply_ReplaceSubmatch(t *testing.T) {
+	r := Recipe{
+		Replace: []ReplaceEntry{
+			{Search: "key = (.*), search", Replace: "key = $1, replaced"},
+		},
+	}
+	r.Compile()
+
+	s := apply(r, "key = value1, search\n")
+	if s != "key = value1, replaced\n" {
+		t.Errorf("'search' should have been replaced: %s", s)
+	}
+}
+
 func TestApply_ReplaceContext(t *testing.T) {
 	r := Recipe{
 		Replace: []ReplaceEntry{
