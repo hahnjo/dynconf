@@ -32,6 +32,24 @@ func containsOnlyNewLines(b []byte) bool {
 	return true
 }
 
+func evaluateContext(c Context, line []byte, active bool) bool {
+	// Index where the begin match ended. This is to avoid matching the same string for the end.
+	beginMatch := 0
+	if !active && c.BeginRegexp != nil {
+		loc := c.BeginRegexp.FindIndex(line)
+		if loc != nil {
+			active = true
+			// Remember where the match ended.
+			beginMatch = loc[1]
+		}
+	}
+	if active && c.EndRegexp != nil && c.EndRegexp.Match(line[beginMatch:]) {
+		active = false
+	}
+
+	return active
+}
+
 func applyReplacement(r ReplaceEntry, line []byte) ([]byte, int) {
 	s := r.SearchRegexp
 	allIndexes := s.FindAllSubmatchIndex(line, -1)
@@ -126,22 +144,10 @@ func ApplyToInput(r Recipe, input []byte) ([]byte, []error) {
 		if r.hasContext {
 			// For each delete and replace, check if the context begins or ends.
 			for idx, d := range r.Delete {
-				c := d.Context
-				if !deleteActive[idx] && c.BeginRegexp != nil && c.BeginRegexp.Match(line) {
-					deleteActive[idx] = true
-				}
-				if deleteActive[idx] && c.EndRegexp != nil && c.EndRegexp.Match(line) {
-					deleteActive[idx] = false
-				}
+				deleteActive[idx] = evaluateContext(d.Context, line, deleteActive[idx])
 			}
 			for idx, sr := range r.Replace {
-				c := sr.Context
-				if !replaceActive[idx] && c.BeginRegexp != nil && c.BeginRegexp.Match(line) {
-					replaceActive[idx] = true
-				}
-				if replaceActive[idx] && c.EndRegexp != nil && c.EndRegexp.Match(line) {
-					replaceActive[idx] = false
-				}
+				replaceActive[idx] = evaluateContext(sr.Context, line, replaceActive[idx])
 			}
 		}
 

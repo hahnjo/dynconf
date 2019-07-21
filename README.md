@@ -34,9 +34,12 @@ replace:
 append: "last line"
 ```
 `delete` and `replace` are arrays and their `search` key is interpreted as regular expression.
+
 `context` is optional and allows to restrict `delete` and `replace` to a subset of the file.
 `begin` and `end` are interpreted as regular expressions and matched to input file before deleting a line or replacing its contents.
 If `begin` or `end` is omitted, the context begins in the first line or ends at the last.
+`begin` and `end` do not match the same substring, ie. `end` can only match from the position where the match of `begin` ended.
+However, if `begin` and `end` still match at the same line the context will not be enabled.
 
 `file` names the configuration file that should be produced.
 The unmodified input is taken from (in this order):

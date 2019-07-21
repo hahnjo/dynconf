@@ -95,6 +95,35 @@ func TestApply_DeleteContextSpecial(t *testing.T) {
 	if s != "remove\nbegin\nend\nremove\nbegin\nend\nremove\n" {
 		t.Errorf("some lines should have been removed: %s", s)
 	}
+
+	r = Recipe{
+		Delete: []DeleteEntry{
+			{Context: Context{Begin: "^\\[section\\]", End: "^\\[.*\\]"}, Search: "remove"},
+		},
+	}
+	r.Compile()
+
+	s = applyNoErrors(t, r, `
+[unrelated]
+remove
+
+[section]
+remove
+nextLine
+
+[nextSection]
+more`)
+	if s != `
+[unrelated]
+remove
+
+[section]
+nextLine
+
+[nextSection]
+more` {
+		t.Errorf("line in [section] should have been removed: %s", s)
+	}
 }
 
 func TestApply_DeleteCheckCount(t *testing.T) {
@@ -239,6 +268,36 @@ func TestApply_ReplaceContextSpecial(t *testing.T) {
 	s = applyNoErrors(t, r, "search\nbegin\nsearch\nend\nsearch\nbegin\nsearch\nend\nsearch\n")
 	if s != "search\nbegin\nreplace\nend\nsearch\nbegin\nreplace\nend\nsearch\n" {
 		t.Errorf("some lines should have been replaced: %s", s)
+	}
+
+	r = Recipe{
+		Replace: []ReplaceEntry{
+			{Context: Context{Begin: "^\\[section\\]", End: "^\\[.*\\]"}, Search: "search", Replace: "replace"},
+		},
+	}
+	r.Compile()
+
+	s = applyNoErrors(t, r, `
+[unrelated]
+search
+
+[section]
+search
+nextLine
+
+[nextSection]
+more`)
+	if s != `
+[unrelated]
+search
+
+[section]
+replace
+nextLine
+
+[nextSection]
+more` {
+		t.Errorf("line in [section] should have been replaced: %s", s)
 	}
 }
 
