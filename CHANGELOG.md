@@ -1,3 +1,10 @@
+v1.1rc1 [2019-07-21]
+------------------
+
+ * Support for contexts to conditionally enable / disable deletes and replaces.
+ * Option to check how often a delete / replace is applied.
+ * Add script for bash completion.
+
 v1.0.2 [2018-08-06]
 ------------------
 
