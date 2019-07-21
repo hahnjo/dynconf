@@ -30,6 +30,27 @@ func containsOnlyNewLines(b []byte) bool {
 	return true
 }
 
+func applyReplacement(r ReplaceEntry, line []byte) []byte {
+	s := r.SearchRegexp
+	allIndexes := s.FindAllSubmatchIndex(line, -1)
+	if allIndexes == nil {
+		return line
+	}
+
+	modified := make([]byte, 0)
+	pos := 0
+	for _, loc := range allIndexes {
+		// Append bytes up to match.
+		modified = append(modified, line[pos:loc[0]]...)
+		modified = s.Expand(modified, r.ReplaceBytes, line, loc)
+		pos = loc[1]
+	}
+	// Append rest of line.
+	modified = append(modified, line[pos:]...)
+
+	return modified
+}
+
 func applyAppend(r Recipe, modified []byte) []byte {
 	if len(r.Append) == 0 {
 		// Do nothing.
@@ -123,7 +144,7 @@ func ApplyToInput(r Recipe, input []byte) []byte {
 		// Check if line matches a pattern that shall be replaced.
 		for idx, sr := range r.Replace {
 			if !r.hasContext || replaceActive[idx] {
-				line = sr.SearchRegexp.ReplaceAll(line, sr.ReplaceBytes)
+				line = applyReplacement(sr, line)
 			}
 		}
 		modified = append(modified, line...)
