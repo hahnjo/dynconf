@@ -35,9 +35,12 @@ func Show(args []string) {
 	c := dynconf.NewConfig(r.File)
 	input := c.GetInput()
 
-	_, content, err := dynconf.ApplyToFile(r, input)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+	_, content, errs := dynconf.ApplyToFile(r, input)
+	if len(errs) != 0 {
+		fmt.Fprintf(os.Stderr, "Recipe '%s' coult not be applied:\n", file)
+		for _, e := range errs {
+			fmt.Printf("error: %s\n", e)
+		}
 		os.Exit(1)
 	}
 

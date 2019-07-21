@@ -22,6 +22,7 @@ type DeleteEntry struct {
 	Context      Context
 	Search       string
 	SearchRegexp *regexp.Regexp
+	CheckCount   int `yaml:"checkCount"`
 }
 
 type ReplaceEntry struct {
@@ -30,6 +31,7 @@ type ReplaceEntry struct {
 	SearchRegexp *regexp.Regexp
 	Replace      string
 	ReplaceBytes []byte
+	CheckCount   int `yaml:"checkCount"`
 }
 
 type Recipe struct {
@@ -39,6 +41,7 @@ type Recipe struct {
 	Append  string
 
 	hasContext bool
+	hasCount   bool
 }
 
 func (r *Recipe) Read(filename string) error {
@@ -82,6 +85,10 @@ func (r *Recipe) Compile() error {
 				return err
 			}
 		}
+
+		if d.CheckCount > 0 {
+			r.hasCount = true
+		}
 	}
 
 	for idx, sr := range r.Replace {
@@ -105,6 +112,10 @@ func (r *Recipe) Compile() error {
 				return err
 			}
 		}
+
+		if sr.CheckCount > 0 {
+			r.hasCount = true
+		}
 	}
 
 	return nil
@@ -124,11 +135,17 @@ func (r *Recipe) Validate() ([]error, []error) {
 		if len(d.Search) == 0 {
 			errs = append(errs, fmt.Errorf("Delete entry cannot have empty regex!"))
 		}
+		if d.CheckCount < 0 {
+			errs = append(errs, fmt.Errorf("Delete entry cannot have negative count!"))
+		}
 	}
 
 	for _, rs := range r.Replace {
 		if len(rs.Search) == 0 {
 			errs = append(errs, fmt.Errorf("Replace entry cannot have empty regex!"))
+		}
+		if rs.CheckCount < 0 {
+			errs = append(errs, fmt.Errorf("Replace entry cannot have negative count!"))
 		}
 	}
 

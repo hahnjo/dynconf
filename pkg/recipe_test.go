@@ -61,6 +61,8 @@ append: "last line"`)
 		t.Errorf("delete pattern was not read correctly: %s\n", d.Search)
 	} else if d.Context.BeginRegexp != nil || d.Context.EndRegexp != nil {
 		t.Errorf("delete should not have context!\n")
+	} else if d.CheckCount != 0 {
+		t.Errorf("delete should not have expected!\n")
 	}
 
 	if len(r.Replace) != 1 {
@@ -73,6 +75,8 @@ append: "last line"`)
 		t.Errorf("replacement was not read correctly: %s\n", rs.Replace)
 	} else if rs.Context.BeginRegexp != nil || rs.Context.EndRegexp != nil {
 		t.Errorf("replacement should not have context!\n")
+	} else if rs.CheckCount != 0 {
+		t.Errorf("replacement should not have expected!\n")
 	}
 
 	if r.Append != "last line" {
@@ -95,9 +99,7 @@ replace:
       begin: "begin"
       end: "end"
     search: "pattern"
-    replace: "substitution"
-
-append: "last line"`)
+    replace: "substitution"`)
 	defer os.Remove(filename)
 
 	var r Recipe
@@ -116,6 +118,8 @@ append: "last line"`)
 		t.Errorf("delete context end was not read correctly: %s\n", d.Context.End)
 	} else if d.Search != "remove" || d.SearchRegexp.String() != "remove" {
 		t.Errorf("delete pattern was not read correctly: %s\n", d.Search)
+	} else if d.CheckCount != 0 {
+		t.Errorf("delete should not have expected!\n")
 	}
 
 	if len(r.Replace) != 1 {
@@ -130,10 +134,55 @@ append: "last line"`)
 		t.Errorf("replace pattern was not read correctly: %s\n", rs.Search)
 	} else if rs.Replace != "substitution" {
 		t.Errorf("replacement was not read correctly: %s\n", rs.Replace)
+	} else if rs.CheckCount != 0 {
+		t.Errorf("replacement should not have expected!\n")
+	}
+}
+
+func TestRead_CheckCount(t *testing.T) {
+	filename := writeRecipe(t, `
+delete:
+  -
+    search: "remove"
+    checkCount: 1
+
+replace:
+  -
+    search: "pattern"
+    replace: "substitution"
+    checkCount: 2`)
+	defer os.Remove(filename)
+
+	var r Recipe
+	err := r.Read(filename)
+	if err != nil {
+		t.Errorf("could not read recipe: %s\n", err)
 	}
 
-	if r.Append != "last line" {
-		t.Errorf("append was not read correctly: %s\n", r.Append)
+	if len(r.Delete) != 1 {
+		t.Errorf("wrong number of delete entries: %d\n", len(r.Delete))
+	}
+	d := r.Delete[0]
+	if d.Search != "remove" || d.SearchRegexp.String() != "remove" {
+		t.Errorf("delete pattern was not read correctly: %s\n", d.Search)
+	} else if d.Context.BeginRegexp != nil || d.Context.EndRegexp != nil {
+		t.Errorf("delete should not have context!\n")
+	} else if d.CheckCount != 1 {
+		t.Errorf("expected of delete was not read correctly: %d!\n", d.CheckCount)
+	}
+
+	if len(r.Replace) != 1 {
+		t.Errorf("wrong number of replace entries: %d\n", len(r.Replace))
+	}
+	rs := r.Replace[0]
+	if rs.Search != "pattern" || rs.SearchRegexp.String() != "pattern" {
+		t.Errorf("replace pattern was not read correctly: %s\n", rs.Search)
+	} else if rs.Replace != "substitution" {
+		t.Errorf("replacement was not read correctly: %s\n", rs.Replace)
+	} else if rs.Context.BeginRegexp != nil || rs.Context.EndRegexp != nil {
+		t.Errorf("replacement should not have context!\n")
+	} else if rs.CheckCount != 2 {
+		t.Errorf("expected of replacement was not read correctly: %d!\n", rs.CheckCount)
 	}
 }
 
@@ -159,6 +208,36 @@ replace:
 
 	errs, warns := r.Validate()
 	if len(errs) != 3 {
+		t.Errorf("unexpected number of errors: %d\n", len(errs))
+	} else if len(warns) != 0 {
+		t.Errorf("unexpected number of warnings: %d\n", len(warns))
+	}
+}
+
+func TestValidateErrs_CheckCount(t *testing.T) {
+	filename := writeRecipe(t, `
+file: "/absolute/test.conf"
+
+delete:
+  -
+    search: "remove"
+    checkCount: -1
+
+replace:
+  -
+    search: "pattern"
+    replace: "substitution"
+    checkCount: -2`)
+	defer os.Remove(filename)
+
+	var r Recipe
+	err := r.Read(filename)
+	if err != nil {
+		t.Errorf("could not read recipe: %s\n", err)
+	}
+
+	errs, warns := r.Validate()
+	if len(errs) != 2 {
 		t.Errorf("unexpected number of errors: %d\n", len(errs))
 	} else if len(warns) != 0 {
 		t.Errorf("unexpected number of warnings: %d\n", len(warns))

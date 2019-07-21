@@ -4,16 +4,18 @@ package dynconf
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 )
 
-func ApplyToFile(r Recipe, filename string) ([]byte, []byte, error) {
+func ApplyToFile(r Recipe, filename string) ([]byte, []byte, []error) {
 	input, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, []error{err}
 	}
 
-	return input, ApplyToInput(r, input), nil
+	modified, errs := ApplyToInput(r, input)
+	return input, modified, errs
 }
 
 func isNewLine(c byte) bool {
@@ -30,11 +32,11 @@ func containsOnlyNewLines(b []byte) bool {
 	return true
 }
 
-func applyReplacement(r ReplaceEntry, line []byte) []byte {
+func applyReplacement(r ReplaceEntry, line []byte) ([]byte, int) {
 	s := r.SearchRegexp
 	allIndexes := s.FindAllSubmatchIndex(line, -1)
 	if allIndexes == nil {
-		return line
+		return line, 0
 	}
 
 	modified := make([]byte, 0)
@@ -48,7 +50,7 @@ func applyReplacement(r ReplaceEntry, line []byte) []byte {
 	// Append rest of line.
 	modified = append(modified, line[pos:]...)
 
-	return modified
+	return modified, len(allIndexes)
 }
 
 func applyAppend(r Recipe, modified []byte) []byte {
@@ -74,7 +76,7 @@ func applyAppend(r Recipe, modified []byte) []byte {
 	return modified
 }
 
-func ApplyToInput(r Recipe, input []byte) []byte {
+func ApplyToInput(r Recipe, input []byte) ([]byte, []error) {
 	inLen := len(input)
 
 	deleteActive := []bool(nil)
@@ -89,6 +91,15 @@ func ApplyToInput(r Recipe, input []byte) []byte {
 		for idx, r := range r.Replace {
 			replaceActive[idx] = (r.Context.BeginRegexp == nil)
 		}
+	}
+
+	// Count number of matches for deletes and replacements.
+	errs := make([]error, 0)
+	deleteCount := []int(nil)
+	replaceCount := []int(nil)
+	if r.hasCount {
+		deleteCount = make([]int, len(r.Delete))
+		replaceCount = make([]int, len(r.Replace))
 	}
 
 	modified := make([]byte, 0)
@@ -137,6 +148,9 @@ func ApplyToInput(r Recipe, input []byte) []byte {
 		// Skip line if it matches a pattern that shall be deleted.
 		for idx, d := range r.Delete {
 			if (!r.hasContext || deleteActive[idx]) && d.SearchRegexp.Match(line) {
+				if r.hasCount {
+					deleteCount[idx]++
+				}
 				goto next
 			}
 		}
@@ -144,7 +158,11 @@ func ApplyToInput(r Recipe, input []byte) []byte {
 		// Check if line matches a pattern that shall be replaced.
 		for idx, sr := range r.Replace {
 			if !r.hasContext || replaceActive[idx] {
-				line = applyReplacement(sr, line)
+				var count int
+				line, count = applyReplacement(sr, line)
+				if r.hasCount {
+					replaceCount[idx] += count
+				}
 			}
 		}
 		modified = append(modified, line...)
@@ -159,5 +177,16 @@ func ApplyToInput(r Recipe, input []byte) []byte {
 
 	modified = applyAppend(r, modified)
 
-	return modified
+	for idx, d := range r.Delete {
+		if d.CheckCount != 0 && d.CheckCount != deleteCount[idx] {
+			errs = append(errs, fmt.Errorf("Delete pattern '%s' applied %d times, expected %d!", d.Search, deleteCount[idx], d.CheckCount))
+		}
+	}
+	for idx, r := range r.Replace {
+		if r.CheckCount != 0 && r.CheckCount != replaceCount[idx] {
+			errs = append(errs, fmt.Errorf("Replace pattern '%s' applied %d times, expected %d!", r.Search, replaceCount[idx], r.CheckCount))
+		}
+	}
+
+	return modified, errs
 }

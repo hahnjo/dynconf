@@ -6,8 +6,12 @@ import (
 	"testing"
 )
 
-func apply(r Recipe, input string) string {
-	return string(ApplyToInput(r, []byte(input)))
+func applyNoErrors(t *testing.T, r Recipe, input string) string {
+	modified, errs := ApplyToInput(r, []byte(input))
+	if len(errs) != 0 {
+		t.Errorf("did not expect %d errors", len(errs))
+	}
+	return string(modified)
 }
 
 func TestApply_Delete(t *testing.T) {
@@ -18,7 +22,7 @@ func TestApply_Delete(t *testing.T) {
 	}
 	r.Compile()
 
-	s := apply(r, "line1\nremove\n\nline2\ntest remove test\n")
+	s := applyNoErrors(t, r, "line1\nremove\n\nline2\ntest remove test\n")
 	if s != "line1\n\nline2\n" {
 		t.Errorf("'remove' lines should have been removed: %s", s)
 	}
@@ -36,7 +40,7 @@ func TestApply_DeleteContext(t *testing.T) {
 	}
 	r.Compile()
 
-	s := apply(r, `
+	s := applyNoErrors(t, r, `
 removeContext
 removeBegin
 removeEnd
@@ -82,14 +86,54 @@ func TestApply_DeleteContextSpecial(t *testing.T) {
 	r.Compile()
 
 	sameLine := "remove\nbegin end\nremove\n"
-	s := apply(r, sameLine)
+	s := applyNoErrors(t, r, sameLine)
 	if s != sameLine {
 		t.Errorf("input should not have been modified: %s", s)
 	}
 
-	s = apply(r, "remove\nbegin\nremove\nend\nremove\nbegin\nremove\nend\nremove\n")
+	s = applyNoErrors(t, r, "remove\nbegin\nremove\nend\nremove\nbegin\nremove\nend\nremove\n")
 	if s != "remove\nbegin\nend\nremove\nbegin\nend\nremove\n" {
 		t.Errorf("some lines should have been removed: %s", s)
+	}
+}
+
+func TestApply_DeleteCheckCount(t *testing.T) {
+	r := Recipe{
+		Delete: []DeleteEntry{
+			{Search: "removeAlways", CheckCount: 3},
+			{Context: Context{Begin: "\\[begin\\]", End: "\\[end\\]"}, Search: "removeContext", CheckCount: 1},
+		},
+	}
+	r.Compile()
+
+	i := `
+removeAlways
+removeContext
+
+--[begin]--
+removeAlways
+removeContext
+--[end]--
+
+removeAlways
+removeContext`
+	s := applyNoErrors(t, r, i)
+
+	if s != `
+removeContext
+
+--[begin]--
+--[end]--
+
+removeContext` {
+		t.Errorf("some lines should have been removed: %s", s)
+	}
+
+	r.Delete[0].CheckCount = 2
+	r.Delete[1].CheckCount = 2
+	_, errs := ApplyToInput(r, []byte(i))
+	if len(errs) != 2 {
+		t.Errorf("unexpected number of errors: %d\n", len(errs))
 	}
 }
 
@@ -101,7 +145,7 @@ func TestApply_Replace(t *testing.T) {
 	}
 	r.Compile()
 
-	s := apply(r, "line1\nsearch\nline2\ntest search replace\n")
+	s := applyNoErrors(t, r, "line1\nsearch\nline2\ntest search replace\n")
 	if s != "line1\nreplace\nline2\ntest replace replace\n" {
 		t.Errorf("'search' lines should have been replaced: %s", s)
 	}
@@ -115,7 +159,7 @@ func TestApply_ReplaceSubmatch(t *testing.T) {
 	}
 	r.Compile()
 
-	s := apply(r, "key = value1, search\n")
+	s := applyNoErrors(t, r, "key = value1, search\n")
 	if s != "key = value1, replaced\n" {
 		t.Errorf("'search' should have been replaced: %s", s)
 	}
@@ -133,7 +177,7 @@ func TestApply_ReplaceContext(t *testing.T) {
 	}
 	r.Compile()
 
-	s := apply(r, `
+	s := applyNoErrors(t, r, `
 searchContext
 searchBegin
 searchEnd
@@ -187,14 +231,102 @@ func TestApply_ReplaceContextSpecial(t *testing.T) {
 	r.Compile()
 
 	sameLine := "search\nbegin end\nsearch\n"
-	s := apply(r, sameLine)
+	s := applyNoErrors(t, r, sameLine)
 	if s != sameLine {
 		t.Errorf("input should not have been modified: %s", s)
 	}
 
-	s = apply(r, "search\nbegin\nsearch\nend\nsearch\nbegin\nsearch\nend\nsearch\n")
+	s = applyNoErrors(t, r, "search\nbegin\nsearch\nend\nsearch\nbegin\nsearch\nend\nsearch\n")
 	if s != "search\nbegin\nreplace\nend\nsearch\nbegin\nreplace\nend\nsearch\n" {
 		t.Errorf("some lines should have been replaced: %s", s)
+	}
+}
+
+func TestApply_ReplaceCheckCount(t *testing.T) {
+	r := Recipe{
+		Replace: []ReplaceEntry{
+			{Search: "searchAlways", Replace: "replaceAlways", CheckCount: 3},
+			{Context: Context{Begin: "\\[begin\\]", End: "\\[end\\]"}, Search: "searchContext", Replace: "replaceContext", CheckCount: 1},
+		},
+	}
+	r.Compile()
+
+	i := `
+searchAlways
+searchContext
+
+--[begin]--
+searchAlways
+searchContext
+--[end]--
+
+searchAlways
+searchContext`
+	s := applyNoErrors(t, r, i)
+
+	if s != `
+replaceAlways
+searchContext
+
+--[begin]--
+replaceAlways
+replaceContext
+--[end]--
+
+replaceAlways
+searchContext` {
+		t.Errorf("some lines should have been replaced: %s", s)
+	}
+
+	r.Replace[0].CheckCount = 2
+	r.Replace[1].CheckCount = 2
+	_, errs := ApplyToInput(r, []byte(i))
+	if len(errs) != 2 {
+		t.Errorf("unexpected number of errors: %d\n", len(errs))
+	}
+}
+
+func TestApply_ReplaceCheckCountMulti(t *testing.T) {
+	r := Recipe{
+		Replace: []ReplaceEntry{
+			{Search: "searchAlways", Replace: "replaceAlways", CheckCount: 3},
+			{Context: Context{Begin: "\\[begin\\]", End: "\\[end\\]"}, Search: "searchContext", Replace: "replaceContext", CheckCount: 1},
+		},
+	}
+	r.Compile()
+
+	i := `
+searchAlways
+searchContext
+
+--[begin]--
+searchAlways
+searchContext
+--[end]--
+
+searchAlways
+searchContext`
+	s := applyNoErrors(t, r, i)
+
+	if s != `
+replaceAlways
+searchContext
+
+--[begin]--
+replaceAlways
+replaceContext
+--[end]--
+
+replaceAlways
+searchContext` {
+		t.Errorf("some lines should have been replaced: %s", s)
+	}
+
+	r.Replace[0].CheckCount = 2
+	r.Replace[1].CheckCount = 2
+	_, errs := ApplyToInput(r, []byte(i))
+	if len(errs) != 2 {
+		t.Errorf("unexpected number of errors: %d\n", len(errs))
 	}
 }
 
@@ -203,24 +335,24 @@ func TestApply_Append(t *testing.T) {
 		Append: "append",
 	}
 
-	s := apply(r, "line\n")
+	s := applyNoErrors(t, r, "line\n")
 	if s != "line\nappend\n" {
 		t.Errorf("line should have been appended: %s", s)
 	}
 
 	// Apply should add a newline after the input (if there is none).
-	s = apply(r, "line")
+	s = applyNoErrors(t, r, "line")
 	if s != "line\nappend\n" {
 		t.Errorf("line should have been appended after newline: %s", s)
 	}
 
 	// Apply should also handle empty files.
-	s = apply(r, "")
+	s = applyNoErrors(t, r, "")
 	if s != "append\n" {
 		t.Errorf("line should have been appended: %s", s)
 	}
 
-	s = apply(r, "\n")
+	s = applyNoErrors(t, r, "\n")
 	if s != "append\n" {
 		t.Errorf("line should have been appended: %s", s)
 	}
@@ -232,7 +364,7 @@ func TestApply_AppendNewLine(t *testing.T) {
 	}
 
 	// There should be no additiona newline after the append.
-	s := apply(r, "original\n")
+	s := applyNoErrors(t, r, "original\n")
 	if s != "original\nline1\nline2\n" {
 		t.Errorf("lines should have been appended: %s", s)
 	}
@@ -241,12 +373,12 @@ func TestApply_AppendNewLine(t *testing.T) {
 func TestApply_Empty(t *testing.T) {
 	r := Recipe{}
 
-	s := apply(r, "")
+	s := applyNoErrors(t, r, "")
 	if s != "" {
 		t.Errorf("result should be empty: %s", s)
 	}
 
-	s = apply(r, "\n")
+	s = applyNoErrors(t, r, "\n")
 	if s != "\n" {
 		t.Errorf("result should be empty: %s", s)
 	}
@@ -256,13 +388,13 @@ func TestApply_Newline(t *testing.T) {
 	r := Recipe{}
 
 	i := "line1\nline2\r"
-	s := apply(r, i)
+	s := applyNoErrors(t, r, i)
 	if s != i {
 		t.Errorf("newlines should have been copied: %s", s)
 	}
 
 	i = "line1\r\nline2\n\r"
-	s = apply(r, i)
+	s = applyNoErrors(t, r, i)
 	if s != i {
 		t.Errorf("newlines should have been copied: %s", s)
 	}
