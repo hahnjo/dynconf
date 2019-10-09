@@ -1,12 +1,17 @@
+EXTRA_DEPFLAGS ?=
+EXTRA_GOFLAGS ?=
+EXTRA_TESTFLAGS ?=
+COVERAGE_FLAGS ?= -cover
+
 all: dep dynconf
 .PHONY: all
 
 dep:
-	dep ensure
+	dep ensure $(EXTRA_DEPFLAGS)
 .PHONY: dep
 
 dynconf:
-	go build
+	go build $(EXTRA_GOFLAGS)
 .PHONY: dynconf
 
 fmt:
@@ -14,11 +19,10 @@ fmt:
 .PHONY: fmt
 
 TEST_DIRS = ./pkg
-COVERAGE ?= -cover
 test:
-	go test $(COVERAGE) $(TEST_DIRS)
+	go test $(EXTRA_TESTFLAGS) $(COVERAGE) $(TEST_DIRS)
 .PHONY: test
 
 bench:
-	go test -bench . $(TEST_DIRS)
+	go test $(EXTRA_TESTFLAGS) -bench . $(TEST_DIRS)
 .PHONY: bench
