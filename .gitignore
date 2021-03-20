@@ -1,8 +1,5 @@
 /dynconf
 
-# Dependency management with dep
-/vendor/
-
 # For testing in the repository
 /*.yml
 /*.conf

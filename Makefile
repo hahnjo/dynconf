@@ -3,12 +3,8 @@ EXTRA_GOFLAGS ?=
 EXTRA_TESTFLAGS ?=
 COVERAGE_FLAGS ?= -cover
 
-all: dep dynconf
+all: dynconf
 .PHONY: all
-
-dep:
-	dep ensure $(EXTRA_DEPFLAGS)
-.PHONY: dep
 
 dynconf:
 	go build $(EXTRA_GOFLAGS)
