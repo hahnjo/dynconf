@@ -24,7 +24,7 @@ The commands are:
 `
 
 const version = `
-DynConf 1.1.1
+DynConf 1.1.2
 Copyright (C) 2018 - 2019  Jonas Hahnfeld
 License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>
 This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you
