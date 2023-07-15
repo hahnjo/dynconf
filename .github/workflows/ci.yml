@@ -1,0 +1,15 @@
+name: Build and Test
+on: [push]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '1.20.x'
+      - run: go install github.com/mattn/goveralls@latest
+      - run: make
+      - run: COVERAGE="-covermode=count -coverprofile=coverage.out" make test
+      - run: goveralls -coverprofile=coverage.out -repotoken ${{ secrets.COVERALLS_TOKEN }}
