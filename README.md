@@ -1,4 +1,4 @@
-DynConf [![Coverage Status](https://coveralls.io/repos/github/hahnjo/dynconf/badge.svg)](https://coveralls.io/github/hahnjo/dynconf)
+DynConf [![build-and-test](https://github.com/hahnjo/dynconf/actions/workflows/ci.yml/badge.svg)](https://github.com/hahnjo/dynconf/actions/workflows/ci.yml) [![Coverage Status](https://coveralls.io/repos/github/hahnjo/dynconf/badge.svg)](https://coveralls.io/github/hahnjo/dynconf)
 =======
 
 DynConf is a small program to apply recipes to configuration files.
